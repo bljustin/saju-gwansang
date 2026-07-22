@@ -94,8 +94,7 @@ function saveProfile() {
   const p = {
     y: $("#in-y").value, mo: $("#in-mo").value, d: $("#in-d").value,
     h: $("#in-h").value, mi: $("#in-mi").value, noTime: $("#in-noTime").checked,
-    city: $("#in-city").value, lon: $("#in-lon").value,
-    jasi: $("#in-jasi").value, du: $("#in-du").value, gender: $("#in-gender").value,
+    city: $("#in-city").value, lon: $("#in-lon").value, gender: $("#in-gender").value,
     fam: $("#nm-fam").value, giv: $("#nm-giv").value, school: $("#nm-school").value,
   };
   try { localStorage.setItem("saju.profile", JSON.stringify(p)); } catch (e) {}
@@ -110,8 +109,7 @@ function restoreProfile() {
   $("#in-noTime").checked = !!p.noTime;
   $("#in-h").disabled = $("#in-mi").disabled = !!p.noTime;
   if (p.city) { $("#in-city").value = p.city; $("#lon-wrap").style.display = p.city === "custom" ? "" : "none"; }
-  $("#in-lon").value = p.lon || ""; $("#in-jasi").value = p.jasi || "yaja";
-  $("#in-du").value = p.du || "floor"; $("#in-gender").value = p.gender || "";
+  $("#in-lon").value = p.lon || ""; $("#in-gender").value = p.gender || "";
   $("#nm-fam").value = p.fam || ""; $("#nm-giv").value = p.giv || "";
   $("#nm-school").value = p.school || "classic";
   return !!p.y;
@@ -131,7 +129,7 @@ function currentInput() {
     y, mo: +$("#in-mo").value, d: +$("#in-d").value,
     h: +$("#in-h").value, mi: +$("#in-mi").value,
     timeKnown: !$("#in-noTime").checked,
-    longitude, trueSolar, jasiMode: $("#in-jasi").value,
+    longitude, trueSolar, jasiMode: "yaja", // 야자시(자정 기준)로 고정 — 단순함이 정확함보다 어려울 때가 있다
   };
 }
 function runSaju(scroll) {
@@ -363,16 +361,13 @@ function renderFortune() {
   const chart = lastChart, me = chart.day[0];
   const nowY = new Date().getFullYear();
 
-  // 안내 카드
+  // 안내 카드 — 접이식으로 압축
   const c0 = el("div", "card");
-  c0.appendChild(el("h2", null, "운을 읽는 법 🚗 <small>점수가 아니라 타이밍입니다</small>"));
-  c0.appendChild(el("div", "rbody",
-    `<p>운을 이해하는 가장 쉬운 비유가 하나 있습니다.</p>` +
-    `<p><b>사주(당신의 기질)는 자동차</b>입니다. SUV로 태어난 사람, 스포츠카로 태어난 사람, 트럭으로 태어난 사람이 있습니다. 평생 안 바뀝니다.<br>` +
-    `<b>대운은 도로</b>입니다. 10년마다 바뀝니다. 고속도로일 때도 있고 비포장일 때도 있습니다.<br>` +
-    `<b>세운은 그 해의 교통상황</b>입니다. 매년 바뀝니다.</p>` +
-    `<p>그래서 트럭이 스포츠카보다 나쁜 게 아닙니다. 비포장길에서는 트럭이 훨씬 잘 달립니다. <b>운을 본다는 건 좋고 나쁨을 점치는 게 아니라, 지금 내가 어떤 길 위에 있는지를 아는 일</b>입니다.</p>` +
-    `<p class="tip">→ 그래서 이 화면이 묻는 건 딱 하나입니다. <b>지금이 나아갈 때인가, 멈춰 채울 때인가, 다질 때인가.</b></p>`));
+  c0.innerHTML = `<details class="intro"><summary>🚗 운을 읽는 법 — 점수가 아니라 타이밍입니다 (펼쳐 보기)</summary>
+    <div class="gdbody">
+    <p><b>사주는 자동차, 대운은 도로, 세운은 그 해의 교통상황</b>입니다. 트럭이 스포츠카보다 나쁜 게 아니듯 — 비포장길에선 트럭이 잘 달립니다.</p>
+    <p class="tip">→ 이 화면이 묻는 건 하나. <b>지금이 나아갈 때인가, 채울 때인가, 다질 때인가.</b></p>
+    </div></details>`;
   root.appendChild(c0);
 
   // 대운
@@ -381,10 +376,9 @@ function renderFortune() {
   if (!gender) {
     c1.appendChild(el("p", "notice", "대운은 연간의 음양과 성별로 순행/역행이 갈립니다. [사주] 탭에서 성별을 선택하면 타임라인이 열립니다."));
   } else {
-    const du = daeun(chart, gender, $("#in-du").value);
+    const du = daeun(chart, gender, "floor");
     c1.appendChild(el("p", "hint",
-      `${chart.year}년(${GAN_INFO[chart.year[0]][1] > 0 ? "양간" : "음간"}) ${gender === "M" ? "남자" : "여자"} → <b>${du.forward ? "순행" : "역행"}</b> · ` +
-      `대운수 <b>${du.su}</b> (${du.forward ? "다음" : "이전"} 절기 ${du.refJeol}까지 ${du.diffDays}일 ÷ 3, ${$("#in-du").value === "floor" ? "버림" : "반올림"} 방식${chart.input.timeKnown ? "" : " · 시 미상이라 정오 기준"})`));
+      `${chart.year}년(${GAN_INFO[chart.year[0]][1] > 0 ? "양간" : "음간"}) ${gender === "M" ? "남자" : "여자"} → <b>${du.forward ? "순행" : "역행"}</b> · 대운수 <b>${du.su}</b>`));
     const tlBox = el("div", "timeline");
     let nowIdx = null;
     du.periods.forEach((p, i) => {
@@ -420,7 +414,7 @@ function renderFortune() {
   // 지금 위치 · 지금의 분야별 · 지금 할 것 (성별 입력 시)
   const curSeun = seun(chart, nowY);
   if (gender) {
-    const du = daeun(chart, gender, $("#in-du").value);
+    const du = daeun(chart, gender, "floor");
     const cm = el("div", "card");
     cm.appendChild(el("h2", null, "지금 당신은 여기쯤 📍 <small>인생 지도에서의 현재 위치</small>"));
     cm.appendChild(el("div", "rbody", IT.lifeMap(du, nowY, chart.input.y)));
@@ -468,40 +462,55 @@ function renderFortune() {
   cs.appendChild(el("div", "rbody", IT.seunCohort(chart, curSeun, nowY)));
   root.appendChild(cs);
 
-  // 월운 — 올해·내년 2년치
+  // 월운 — 3개월씩 네 묶음으로 콤팩트하게 · 올해와 내년
+  const QGLOSS = {
+    "비겁": "내 기준과 페이스가 또렷해지는 결",
+    "식상": "안의 것을 밖으로 꺼내기 좋은 결",
+    "재성": "벌인 일이 실속으로 잡히는 결",
+    "관성": "자리를 다지고 신뢰가 쌓이는 결",
+    "인성": "속도를 늦추고 채우기 좋은 결",
+  };
+  const nowM = new Date().getMonth() + 1;
   for (const yy of [nowY, nowY + 1]) {
     const c3 = el("div", "card");
-    c3.appendChild(el("h2", null, `${yy}년 열두 달의 기운 <small>절기 기준 · 달을 눌러 보세요</small>`));
+    c3.appendChild(el("h2", null, `${yy}년 열두 달의 기운 <small>절기 기준 · 3개월씩 네 묶음</small>`));
     const w = wolun(chart, yy);
-    const chips = el("div", "mchips");
-    const key = "__selWol" + yy;
-    const nowM = new Date().getMonth() + 1;
-    w.forEach((m, i) => {
-      const g = SIPSIN_GROUP[m.jiSipsin];
-      const isNow = yy === nowY && m.label === nowM + "월";
-      const chip = el("div", "mchip" + (window[key] === i ? " sel" : "") + (isNow ? " thism" : ""));
-      chip.style.background = GROUP_COLOR[g];
-      chip.innerHTML = `<b>${m.label}</b><span class="mt">${IT.MONTH[m.jiSipsin][0]}</span>`;
-      chip.onclick = () => { window[key] = i; renderFortune(); };
-      chips.appendChild(chip);
-    });
-    c3.appendChild(chips);
-    if (window[key] == null && yy === nowY) {
-      const idx = w.findIndex((m) => m.label === nowM + "월");
-      if (idx >= 0) window[key] = idx;
-    }
-    if (window[key] != null && w[window[key]]) {
-      const m = w[window[key]];
-      const fl = IT.FLOW[SIPSIN_GROUP[m.jiSipsin]];
-      const mt = IT.MONTH[m.jiSipsin];
-      const box = el("div", "tldetail");
-      box.appendChild(el("h3", "rhead", `<span class="ricon">${fl.emoji}</span>${yy}년 ${m.label} — ${mt[0]} <span class="gzsmall">${m.pillar}월 · ${m.jeol}~</span>`));
-      box.appendChild(el("div", "rbody",
-        `<p class="big">이 달의 키워드는 <b>${m.jiSipsin}</b>, 한마디로 <b>${mt[0]}</b>입니다.</p>` +
-        `<p>${IT.SIPSIN[m.jiSipsin].scene}</p>` +
-        `<p class="tip">→ <b>이 달에 이렇게 해보세요</b> — ${mt[1]}</p>` +
-        `<p class="soft">한 달의 기운은 크게 요란하지 않습니다. 다만 같은 일도 어떤 달엔 술술 되고 어떤 달엔 유난히 안 되는 경험, 있으시죠. 그 리듬을 미리 알고 쓰면 훨씬 덜 지칩니다.</p>`));
-      c3.appendChild(box);
+    for (let q = 0; q < 4; q++) {
+      const ms = w.slice(q * 3, q * 3 + 3);
+      if (ms.length < 3) continue;
+      // 우세 흐름: 석 달의 월지+월간 십성 6개로 계산 (월간이 해마다 달라 연도별 차이가 살아난다)
+      const toks = [];
+      ms.forEach((m, mi) => {
+        toks.push({ g: SIPSIN_GROUP[m.jiSipsin], s: m.jiSipsin, mi });
+        toks.push({ g: SIPSIN_GROUP[m.ganSipsin], s: m.ganSipsin, mi });
+      });
+      const cnt = {};
+      toks.forEach((t) => (cnt[t.g] = (cnt[t.g] || 0) + 1));
+      const dom = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0][0];
+      const fl = IT.FLOW[dom];
+      const domTok = toks.find((t) => t.g === dom);
+      const domIdx = domTok.mi, domSip = domTok.s;
+      const kwFirst = IT.MONTH[ms[0].jiSipsin][0], kwLast = IT.MONTH[ms[2].jiSipsin][0];
+      const sec = el("div", "rsec");
+      sec.appendChild(el("h3", "rhead",
+        `<span class="ricon">${fl.emoji}</span>${ms[0].label}~${ms[2].label} — ${fl.t}`));
+      const monthLine = ms.map((m) => {
+        const isNow = yy === nowY && m.label === nowM + "월";
+        return `<b>${m.label}</b> ${IT.MONTH[m.jiSipsin][0]}${isNow ? " ◉" : ""}`;
+      }).join(" &nbsp;·&nbsp; ");
+      const arc = kwFirst === kwLast
+        ? `석 달 내내 <b>「${kwFirst}」</b>의 결이 이어집니다.`
+        : `<b>「${kwFirst}」</b>로 열어 <b>「${kwLast}」</b>로 닫는 석 달입니다.`;
+      // 연도별 뉘앙스: 월간(해마다 바뀜)의 우세 결이 지지 흐름과 다르면 한 줄 덧입힌다
+      const gcnt = {};
+      ms.forEach((m) => { const g = SIPSIN_GROUP[m.ganSipsin]; gcnt[g] = (gcnt[g] || 0) + 1; });
+      const gTop = Object.entries(gcnt).sort((a, b) => b[1] - a[1])[0][0];
+      const overlay = gTop !== dom ? ` 그리고 ${yy}년에는 여기에 <b>${IT.FLOW[gTop].verb}</b> 기운이 함께 흐릅니다.` : "";
+      sec.appendChild(el("div", "rbody",
+        `<p>${monthLine}</p>` +
+        `<p>${arc} 큰 흐름은 <b>${fl.t}</b> — ${QGLOSS[dom]}입니다.${overlay}</p>` +
+        `<p class="tip">→ <b>${ms[domIdx].label} 포인트</b> — ${IT.MONTH[domSip][1]}</p>`));
+      c3.appendChild(sec);
     }
     root.appendChild(c3);
   }
@@ -514,7 +523,6 @@ function renderFortune() {
   root.appendChild(c4);
 }
 $("#in-gender").addEventListener("change", () => { saveProfile(); renderFortune(); });
-$("#in-du").addEventListener("change", () => { saveProfile(); renderFortune(); });
 
 // ── 이름 풀이 탭 ─────────────────────────────────────────
 // 성씨의 관용 한자 — 성 자리 후보에서 맨 앞에 놓고 자동 선택
@@ -850,10 +858,24 @@ async function analyzePhoto() {
   catch (err) { st.textContent = "분석 중 오류: " + err.message; return; }
   if (!res.ok) { st.textContent = "🙏 " + res.reason; $("#photo-result").innerHTML = ""; return; }
   st.textContent = "측정 완료. 아래 풀이는 판정이 아니라 이해의 자료입니다.";
-  // 랜드마크 오버레이
+  // 랜드마크 오버레이 — 눈썹 점은 크게(보정 지점), 헤어라인은 점선으로
   const ctx = cv.getContext("2d");
   ctx.fillStyle = "rgba(212,175,55,.9)";
-  for (const p of res.landmarks) { ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 7); ctx.fill(); }
+  res.landmarks.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, i >= 17 && i <= 26 ? 2.6 : 1.6, 0, 7);
+    ctx.fill();
+  });
+  if (res.hairline) {
+    ctx.strokeStyle = "rgba(212,175,55,.85)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(res.hairline.x1 - 10, res.hairline.y);
+    ctx.lineTo(res.hairline.x2 + 10, res.hairline.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
   renderPhotoResult(res);
 }
 function renderPhotoResult(res) {
@@ -928,7 +950,7 @@ function renderPhotoResult(res) {
   const ul = el("ul", "plain");
   for (const u of res.unmeasured) ul.appendChild(el("li", null, u));
   c3.appendChild(ul);
-  c3.appendChild(el("p", null, "이 항목들은 아래 <b>거울 셀프 체크</b>에서 이어서 볼 수 있습니다. 그리고 기억해 주세요 — 관상의 제1 기준은 부위의 생김이 아니라 조화·기세·찰색, 즉 얼굴에 흐르는 힘과 빛입니다. 그것은 오늘의 표정과 마음가짐이 만듭니다."));
+  c3.appendChild(el("p", null, "기억해 주세요 — 관상의 제1 기준은 부위의 생김이 아니라 <b>조화·기세·찰색</b>, 즉 얼굴에 흐르는 힘과 빛입니다. 그것은 오늘의 표정과 마음가짐이 만듭니다."));
   put(c3);
 
   const c4 = el("div", "card");
@@ -938,64 +960,30 @@ function renderPhotoResult(res) {
   put(c4);
 }
 
-// ── 관상: 셀프 체크 ──────────────────────────────────────
-function renderGwansang() {
+// ── 관상: 일반 해설 사전 (부위별 전통 해석) ────────────────
+function renderGwansangGuide() {
   const G = INTERP_DB.gwansang;
-  const pr = $("#gw-principles");
-  pr.innerHTML = "";
-  for (const p of G.principles)
-    pr.appendChild(el("div", "principle", `<b>${p.label}</b> — ${p.desc}`));
-  pr.appendChild(el("div", "principle",
-    `<b>삼정(三停)</b> — 상정(이마·초년) / 중정(눈썹~코끝·중년) / 하정(코끝~턱·말년). ${G.samjeong_rule}<br>` +
-    `<b>오악(五嶽)</b> — ${G.oak.parts.join("·")}. ${G.oak.rule}`));
-  const box = $("#gw-parts");
-  box.innerHTML = "";
-  G.parts.forEach((part, pi) => {
-    const d = el("div", "gpart");
-    d.appendChild(el("div", "gname",
-      `${part.name}<small>${part.palace !== "-" ? part.palace + " · " : ""}${part.domain !== "-" ? part.domain : ""}${part.measure ? " · " + part.measure : ""}</small>`));
-    const opts = el("div", "gopts");
-    part.options.forEach((opt, oi) => {
-      const lb = el("label", null, opt.level);
-      const inp = document.createElement("input");
-      inp.type = "radio"; inp.name = "gw" + pi; inp.value = oi;
-      lb.prepend(inp);
-      inp.addEventListener("change", () => {
-        opts.querySelectorAll("label").forEach((x) => x.classList.remove("sel"));
-        lb.classList.add("sel");
-      });
-      opts.appendChild(lb);
-    });
-    d.appendChild(opts);
-    box.appendChild(d);
-  });
-}
-renderGwansang();
-
-$("#btn-gw").addEventListener("click", () => {
-  const G = INTERP_DB.gwansang;
-  const root = $("#gw-result");
+  const root = $("#gw-guide");
   root.innerHTML = "";
-  const c = el("div", "card gresult");
-  c.appendChild(el("h2", null, "부위별 해설 <small>판정이 아닌 이해의 자료입니다</small>"));
-  let picked = 0;
-  G.parts.forEach((part, pi) => {
-    const sel = document.querySelector(`input[name=gw${pi}]:checked`);
-    if (!sel) return;
-    picked++;
-    const opt = part.options[+sel.value];
-    c.appendChild(el("p", null, `<b>${part.name}</b> (${opt.level}) — ${opt.desc}`));
-  });
-  if (!picked) {
-    c.appendChild(el("p", null, "선택한 부위가 없습니다. 거울을 보며 해당되는 항목을 골라 주세요. 일부만 골라도 됩니다."));
-  } else {
-    c.appendChild(el("div", "notice",
-      "한 부위만으로 판단하지 않는 것이 관상의 원칙입니다. 아쉽게 읽히는 부위가 있어도 그것은 '더 신경 쓰면 좋은 영역'이라는 뜻이지, 좋고 나쁨의 판정이 아닙니다."));
-    c.appendChild(el("em", "quote", `“${G.closing}”`));
+  for (const p of G.principles)
+    root.appendChild(el("div", "principle", `<b>${p.label}</b> — ${p.desc}`));
+  root.appendChild(el("div", "principle",
+    `<b>삼정(三停)</b> — 이마(초년) · 눈썹~코끝(중년) · 코끝~턱(말년). ${G.samjeong_rule}<br>` +
+    `<b>오악(五嶽)</b> — ${G.oak.parts.join("·")}. ${G.oak.rule}`));
+  for (const part of G.parts) {
+    const d = el("details", "gd");
+    d.innerHTML = `<summary><b>${part.name}</b><small>${part.palace !== "-" ? part.palace + " · " : ""}${part.domain !== "-" ? part.domain : ""}</small></summary>` +
+      `<div class="gdbody">` +
+      (part.measure && part.measure !== "-" ? `<p class="hint">📐 보는 법 — ${part.measure}</p>` : "") +
+      part.options.map((o) => `<p><b>${o.level}</b> — ${o.desc}</p>`).join("") +
+      `</div>`;
+    root.appendChild(d);
   }
-  root.appendChild(c);
-  root.scrollIntoView({ behavior: "smooth" });
-});
+  root.appendChild(el("div", "notice",
+    "한 부위만으로 판단하지 않는 것이 관상의 원칙입니다. 아쉽게 읽히는 부위는 <b>더 신경 쓰면 좋은 영역</b>이라는 뜻일 뿐, 좋고 나쁨의 판정이 아닙니다."));
+  root.appendChild(el("em", "quote", `“${G.closing}”`));
+}
+renderGwansangGuide();
 
 // ── 학습 모드 ────────────────────────────────────────────
 let learnStep = 0;
@@ -1068,8 +1056,8 @@ $("#about-body").innerHTML = `
   <ul class="plain">
     <li>절기 절입시각: 1900~2100년 천문 계산(VSOP87) — 공표값 대비 오차 ±1분 검증</li>
     <li>서머타임(1948~51·1955~60·1987~88), 1908~11·1954~61년 표준시(UTC+8:30) 자동 환산</li>
-    <li>진태양시: 경도 보정(1°=4분). 균시차(±16분) 미반영 · 야자시/정자시 선택 가능</li>
-    <li>대운수: 절입까지 일수 ÷ 3 — 버림/반올림이 학파에 따라 달라 설정으로 제공</li>
+    <li>진태양시: 경도 보정(1°=4분). 균시차(±16분) 미반영 · 자시는 야자시(자정 기준)로 통일</li>
+    <li>대운수: 절입까지 일수 ÷ 3, 버림(전통 다수설)으로 통일</li>
     <li>세운·월운은 십성(기운의 성격)으로만 서술 — 월별 점수 그래프는 고전 근거가 없어 넣지 않음</li>
     <li>음력 입력·궁합은 다음 버전 예정</li>
   </ul>

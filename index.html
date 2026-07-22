@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>사주 · 관상 — 나를 읽는 재미</title>
 <meta name="description" content="서버 없이 브라우저에서 동작하는 사주·성명학·관상 자기이해 도구. 입력 정보는 어디에도 전송되지 않습니다.">
 <meta name="theme-color" content="#2b2620">
 <link rel="manifest" href="manifest.webmanifest">
@@ -12,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="사주관상">
+<title>사주 · 관상 — 나를 읽는 재미</title>
 <style>
 :root{
   --bg:#f5f0e6; --paper:#fffdf7; --ink:#2b2620; --sub:#6b6154;
@@ -26,10 +26,17 @@ body{background:var(--bg);color:var(--ink);
 header{text-align:center;padding:26px 0 14px}
 header h1{font-size:1.7rem;letter-spacing:.32em;text-indent:.32em;font-weight:700}
 header p{color:var(--sub);font-size:.9rem;margin-top:6px}
-.tabs{display:flex;gap:6px;justify-content:center;margin:14px 0 22px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;justify-content:center;margin:14px 0 22px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:60;background:var(--bg);padding:10px 0}
 .tabs button{border:1px solid var(--line);background:var(--paper);padding:8px 16px;
   border-radius:22px;font-size:.92rem;cursor:pointer;color:var(--sub)}
 .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* 본문 강조 — 볼드에 형광펜 하이라이트 */
+.rbody b,.rbody strong,.gfind p b,.notice b,.principle b,.colbox b,.gauge p b,.gresult p b{
+  background:linear-gradient(transparent 60%,rgba(212,175,55,.32) 60%);
+  padding:0 2px;border-radius:2px;font-weight:700}
+.rbody p.tip b,.rbody p.good b,.rbody p.care b{background:linear-gradient(transparent 60%,rgba(255,255,255,.55) 60%)}
+.today b,.nickbox b,.nameface b{background:none;padding:0}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;
   padding:22px;margin-bottom:18px;box-shadow:0 1px 4px rgba(60,40,20,.05)}
 .card h2{font-size:1.05rem;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
@@ -229,6 +236,20 @@ input[type=number]{width:96px}
 .gresult p{margin-bottom:10px;font-size:.93rem}
 .principle{background:#f4ede0;border-radius:10px;padding:12px 16px;margin-bottom:8px;font-size:.88rem}
 .principle b{color:var(--accent)}
+/* 접이식 해설 (관상 사전 · 긴 설명 압축) */
+details.gd{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:8px;overflow:hidden}
+details.gd summary{padding:11px 14px;cursor:pointer;font-size:.93rem;list-style:none;position:relative}
+details.gd summary::-webkit-details-marker{display:none}
+details.gd summary::after{content:"▾";position:absolute;right:14px;color:var(--sub);transition:.2s}
+details.gd[open] summary::after{transform:rotate(180deg)}
+details.gd summary small{color:var(--sub);font-size:.78rem;margin-left:6px}
+details.gd .gdbody{padding:2px 14px 12px;border-top:1px dashed var(--line)}
+details.gd .gdbody p{font-size:.88rem;line-height:1.7;margin:8px 0}
+details.intro{border:none;background:#f4ede0;border-radius:10px;margin-bottom:10px}
+details.intro summary{padding:11px 14px;cursor:pointer;font-size:.9rem;list-style:none;font-weight:600}
+details.intro summary::-webkit-details-marker{display:none}
+details.intro .gdbody{padding:0 14px 12px}
+details.intro .gdbody p{font-size:.9rem;line-height:1.75;margin:8px 0}
 footer{max-width:900px;margin:26px auto 0;padding:0 16px;font-size:.76rem;color:var(--sub);text-align:center}
 .quote{font-style:normal;color:var(--accent);text-align:center;display:block;margin-top:10px;letter-spacing:.05em}
 h4.sec{margin:18px 0 6px;font-size:.95rem;color:var(--accent)}
@@ -236,7 +257,34 @@ ul.plain{padding-left:18px;font-size:.9rem}
 ul.plain li{margin-bottom:5px}
 .hidden{display:none}
 .hint{font-size:.8rem;color:var(--sub)}
-@media(max-width:560px){ .pillar{width:78px} .cell .hanja{font-size:1.4rem} }
+/* ── 모바일 최적화 ── */
+@media(max-width:560px){
+  .wrap{padding:10px 12px}
+  header{padding:12px 0 4px}
+  header h1{font-size:1.35rem;letter-spacing:.22em;text-indent:.22em}
+  header p{font-size:.8rem}
+  .tabs{gap:5px;margin:8px -12px 14px;padding:8px 12px;overflow-x:auto;flex-wrap:nowrap;
+    justify-content:flex-start;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex-shrink:0;padding:8px 13px;font-size:.88rem}
+  .card{padding:16px 14px;border-radius:12px;margin-bottom:14px}
+  .card h2{font-size:1rem}
+  .card h2 small{display:block;margin-left:0;margin-top:3px}
+  select,input[type=number],input[type=text]{font-size:16px;padding:10px 10px} /* iOS 확대 방지 */
+  .btn{width:100%;padding:15px;font-size:1.05rem}
+  .grid{gap:8px}
+  .field{flex:1 1 28%}
+  .pillar{width:23%;min-width:0}
+  .cell .hanja{font-size:1.5rem}
+  .rbody p{font-size:.94rem;line-height:1.8}
+  .rhead{font-size:1rem}
+  .gauges .gauge{min-width:100%}
+  .twocol .colbox{min-width:100%}
+  .rffbox{min-width:44%}
+  .tl{min-width:118px}
+  .timeline,.mchips{margin-left:-2px}
+  footer{font-size:.72rem}
+}
 /* 인쇄 · PDF 저장 */
 @media print{
   body{background:#fff;padding:0}
@@ -270,7 +318,7 @@ ul.plain li{margin-bottom:5px}
   <section id="tab-saju">
     <div id="today-card"></div>
     <div class="card">
-      <h2>출생 정보 <small>양력 기준 · 시간을 모르면 3주(三柱) 해석 · 이 기기에만 저장</small></h2>
+      <h2>출생 정보 <small>양력 기준 · 이 기기에만 저장</small></h2>
       <div class="grid">
         <div class="field"><label>연도</label><input type="number" id="in-y" min="1900" max="2100" placeholder="1990"></div>
         <div class="field"><label>월</label><select id="in-mo"></select></div>
@@ -281,21 +329,9 @@ ul.plain li{margin-bottom:5px}
           <label class="check"><input type="checkbox" id="in-noTime"> 시간 모름</label></div>
         <div class="field"><label>성별 (대운 방향)</label>
           <select id="in-gender"><option value="">선택 안 함</option><option value="M">남</option><option value="F">여</option></select></div>
-      </div>
-      <div class="grid" style="margin-top:12px">
-        <div class="field"><label>출생지 (진태양시 보정)</label><select id="in-city"></select></div>
+        <div class="field"><label>출생지 (시차 보정)</label><select id="in-city"></select></div>
         <div class="field" id="lon-wrap" style="display:none"><label>경도 직접 입력 (°E)</label>
           <input type="number" id="in-lon" step="0.01" placeholder="126.98"></div>
-        <div class="field"><label>자시 경계</label>
-          <select id="in-jasi">
-            <option value="yaja">야자시 (자정 기준 · 기본)</option>
-            <option value="jeongja">정자시 (자시 시작 기준)</option>
-          </select></div>
-        <div class="field"><label>대운수 계산</label>
-          <select id="in-du">
-            <option value="floor">버림 (전통 다수)</option>
-            <option value="round">반올림</option>
-          </select></div>
       </div>
       <div class="center"><button class="btn" id="btn-run">🎴 명식 펼치기</button></div>
     </div>
@@ -319,12 +355,11 @@ ul.plain li{margin-bottom:5px}
           </select></div>
       </div>
       <div style="margin-top:10px" id="nm-hanja-wrap">
-        <label class="hint" style="display:block;margin-bottom:6px">한자 선택 (선택사항 · 글자를 입력하면 후보가 나타납니다)</label>
+        <label class="hint" style="display:block;margin-bottom:6px">한자 선택 (선택 · 몰라도 됩니다)</label>
         <div class="grid" id="nm-hanja"></div>
       </div>
       <div class="center"><button class="btn" id="btn-name">✍️ 이름 펼치기</button></div>
-      <div class="notice">한자를 고르면 <b>한자 풀이 · 자원오행(字源五行) · 수리사격(원획 기준)</b>까지 열립니다.
-        한자를 몰라도 발음오행·음양 풀이는 충분히 유효합니다. 점수는 매기지 않습니다 — 이름은 채점 대상이 아니라 이해의 대상입니다.</div>
+      <div class="notice">한자를 고르면 <b>한자 풀이·자원오행·수리사격</b>까지 열립니다. 점수는 매기지 않습니다 — 이름은 채점이 아니라 이해의 대상이니까요.</div>
     </div>
     <div id="name-result"></div>
   </section>
@@ -332,9 +367,9 @@ ul.plain li{margin-bottom:5px}
   <!-- ───────── 관상 ───────── -->
   <section id="tab-gwansang" class="hidden">
     <div class="card">
-      <h2>사진으로 보는 관상 <small>이 기기 안에서만 처리 · 저장/전송 없음</small></h2>
+      <h2>사진으로 보는 관상 <small>이 기기 안에서만 처리 · 전송 없음</small></h2>
       <div class="photoZone" id="photo-zone">
-        <p>정면을 보고, 이마가 보이며, 밝은 곳에서 찍은 사진일수록 정확합니다.</p>
+        <p><b>정면 · 밝은 곳 · 이마가 보이게</b> — 이 세 가지면 충분합니다.</p>
         <div class="center" style="margin-top:12px">
           <button class="btn2" id="btn-upload">📁 사진 올리기</button>
           <button class="btn2" id="btn-camera">📷 카메라로 찍기</button>
@@ -346,17 +381,13 @@ ul.plain li{margin-bottom:5px}
         <canvas id="photo-canvas" class="hidden"></canvas>
         <div id="photo-status" class="hint" style="margin-top:8px"></div>
       </div>
-      <div class="notice">사진은 화면에 표시하기 위해서만 사용되며, 분석은 전부 이 컴퓨터 안에서 이루어집니다.
-        어떤 서버로도 전송되지 않고, 페이지를 떠나면 사라집니다.</div>
+      <div class="notice">분석은 전부 이 기기 안에서 끝나며, 사진은 어디에도 저장·전송되지 않습니다.</div>
     </div>
     <div id="photo-result"></div>
     <div class="card">
-      <h2>거울 셀프 체크 <small>사진 없이, 또는 사진이 못 재는 부위 확인용</small></h2>
-      <div id="gw-principles"></div>
-      <div id="gw-parts"></div>
-      <div class="center"><button class="btn2" id="btn-gw">해설 보기</button></div>
+      <h2>관상 이야기 <small>부위별 전통 해석 사전 — 사진 없이도 읽는 기본기</small></h2>
+      <div id="gw-guide"></div>
     </div>
-    <div id="gw-result"></div>
   </section>
 
   <!-- ───────── 배우기 ───────── -->

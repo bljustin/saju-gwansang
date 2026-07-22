@@ -1,5 +1,7 @@
-// sw.js — 오프라인 캐시 (설치 후 인터넷 없이도 동작)
-const CACHE = "saju-v2";
+// sw.js — 오프라인 캐시 v3
+// 코드(HTML/JS)는 네트워크 우선(업데이트 즉시 반영, 오프라인 시 캐시),
+// 모델·아이콘은 캐시 우선(한 번 받으면 다시 안 받음).
+const CACHE = "saju-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -34,14 +36,26 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// 캐시 우선, 없으면 네트워크 (오프라인 대비)
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
-  e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
-      return res;
-    }).catch(() => hit))
-  );
+  const url = e.request.url;
+  const cacheFirst = url.includes("/models/") || url.includes("/icons/");
+  if (cacheFirst) {
+    e.respondWith(
+      caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        return res;
+      }))
+    );
+  } else {
+    // 코드·데이터: 네트워크 우선, 실패 시 캐시(오프라인)
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+  }
 });
