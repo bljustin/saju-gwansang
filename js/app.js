@@ -95,7 +95,7 @@ function saveProfile() {
     y: $("#in-y").value, mo: $("#in-mo").value, d: $("#in-d").value,
     h: $("#in-h").value, mi: $("#in-mi").value, noTime: $("#in-noTime").checked,
     city: $("#in-city").value, lon: $("#in-lon").value, gender: $("#in-gender").value,
-    fam: $("#nm-fam").value, giv: $("#nm-giv").value, school: $("#nm-school").value,
+    fam: $("#nm-fam").value, giv: $("#nm-giv").value,
   };
   try { localStorage.setItem("saju.profile", JSON.stringify(p)); } catch (e) {}
   return p;
@@ -111,7 +111,6 @@ function restoreProfile() {
   if (p.city) { $("#in-city").value = p.city; $("#lon-wrap").style.display = p.city === "custom" ? "" : "none"; }
   $("#in-lon").value = p.lon || ""; $("#in-gender").value = p.gender || "";
   $("#nm-fam").value = p.fam || ""; $("#nm-giv").value = p.giv || "";
-  $("#nm-school").value = p.school || "classic";
   return !!p.y;
 }
 
@@ -582,7 +581,7 @@ $("#btn-name").addEventListener("click", () => {
   let res;
   try {
     res = analyzeName({
-      family: fam, given: giv, school: $("#nm-school").value,
+      family: fam, given: giv, school: "classic", // 발음오행은 전통 다수설로 통일
       hanja: pickedHanja(chars),
       sajuOhaeng: lastResult ? lastResult.ohaeng : null,
     });
@@ -1063,7 +1062,7 @@ $("#about-body").innerHTML = `
   </ul>
   <h4 class="sec">이름 풀이</h4>
   <ul class="plain">
-    <li>발음오행 학파(ㅇㅎ=토 전통 / ㅇㅎ=수 훈민정음계)를 설정으로 노출 — 단일 정답을 강요하지 않음</li>
+    <li>발음오행은 전통 다수설(ㅇㅎ=토·ㅁㅂㅍ=수) 기준 — 훈민정음계 등 이설이 있으나 가장 널리 쓰이는 기준으로 통일</li>
     <li>상생 판정은 3경로(초성 연쇄 / 성 받침→이름 초성 / 받침 포함) 중 하나만 통해도 인정</li>
     <li>한자 사전: 한국 표준(KS) 수록 7,700여 자 내장 — 훈음은 libhangul, 획수·부수는 Unicode Unihan</li>
     <li>획수는 원획법(부수를 본자 획수로 환산: 氵=水 4획, 艹=艸 6획 등)으로 자동 계산</li>

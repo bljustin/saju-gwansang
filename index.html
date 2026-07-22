@@ -333,6 +333,7 @@ ul.plain li{margin-bottom:5px}
         <div class="field" id="lon-wrap" style="display:none"><label>경도 직접 입력 (°E)</label>
           <input type="number" id="in-lon" step="0.01" placeholder="126.98"></div>
       </div>
+      <div class="notice">🔒 입력하신 정보는 <b>이 기기 안에만</b> 저장되며, 어떤 서버로도 전송되지 않습니다. 안심하고 사용하세요.</div>
       <div class="center"><button class="btn" id="btn-run">🎴 명식 펼치기</button></div>
     </div>
     <div id="result"></div>
@@ -348,11 +349,6 @@ ul.plain li{margin-bottom:5px}
       <div class="grid">
         <div class="field"><label>성 (한글)</label><input type="text" id="nm-fam" maxlength="2" style="width:80px" placeholder="김"></div>
         <div class="field"><label>이름 (한글)</label><input type="text" id="nm-giv" maxlength="3" style="width:120px" placeholder="민준"></div>
-        <div class="field"><label>발음오행 학파</label>
-          <select id="nm-school">
-            <option value="classic">전통 (ㅇㅎ=토·ㅁㅂㅍ=수)</option>
-            <option value="hunmin">훈민정음계 (ㅇㅎ=수·ㅁㅂㅍ=토)</option>
-          </select></div>
       </div>
       <div style="margin-top:10px" id="nm-hanja-wrap">
         <label class="hint" style="display:block;margin-bottom:6px">한자 선택 (선택 · 몰라도 됩니다)</label>
