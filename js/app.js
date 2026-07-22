@@ -944,6 +944,10 @@ $("#btn-camera").addEventListener("click", async () => {
 });
 $("#btn-shoot").addEventListener("click", () => {
   const v = $("#cam");
+  if (!v.videoWidth || !v.videoHeight) {
+    $("#photo-status").textContent = "카메라가 아직 준비 중이에요 — 1초 뒤 [촬영]을 다시 눌러 주세요.";
+    return;
+  }
   drawToCanvas(v, v.videoWidth, v.videoHeight);
   stopCam();
   analyzePhoto();
@@ -1134,6 +1138,10 @@ $("#palm-camera").addEventListener("click", async () => {
 });
 $("#palm-shoot").addEventListener("click", () => {
   const v = $("#palm-cam");
+  if (!v.videoWidth || !v.videoHeight) {
+    $("#palm-status").textContent = "카메라가 아직 준비 중이에요 — 1초 뒤 [촬영]을 다시 눌러 주세요.";
+    return;
+  }
   palmDraw(v, v.videoWidth, v.videoHeight);
   if (palmCam) { palmCam.getTracks().forEach((t) => t.stop()); palmCam = null; }
   v.classList.add("hidden");
@@ -1172,8 +1180,11 @@ function palmAnalyze() {
     PALM_PHOTO.show(cv, "enh");
     $("#palm-views").classList.remove("hidden");
     document.querySelectorAll(".vtog").forEach((b) => b.classList.toggle("on", b.dataset.v === "enh"));
-    st.innerHTML = `강조 완료 — <b>굵고 긴 주름 ${n}개</b>를 찾아 [🌈 주름 감지]에 색으로 표시했습니다. ` +
-      `강조 사진을 보면서 아래 항목을 골라 주세요. 색은 위치일 뿐, 어느 선인지는 당신 눈이 가장 정확합니다.`;
+    st.innerHTML = `📸 사진 분석은 여기까지 — <b>굵고 긴 주름 ${n}개</b>를 찾아 [🌈 주름 감지]에 색으로 표시했습니다. ` +
+      `이제 <b>강조된 사진과 아래 항목을 번갈아 보면서</b> 각 선의 모양을 고르면 풀이가 열립니다.` +
+      `<div class="center" style="margin-top:10px"><button class="btn2" id="palm-next">👇 다음 단계 — 내 손금 고르러 가기</button></div>`;
+    const nx = $("#palm-next");
+    if (nx) nx.onclick = () => $("#palm-hand").scrollIntoView({ behavior: "smooth" });
   }, 30);
 }
 document.querySelectorAll(".vtog").forEach((b) => {
