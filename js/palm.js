@@ -115,7 +115,10 @@ const PALM_PHOTO = {
     return out;
   },
 
-  /** 강조 뷰 + 주름 마스크 + 연결 성분. 성분 개수 반환 */
+  /** 강조 뷰 + 주름 마스크.
+   *  ① 적응형 대비: 지역 표준편차로 정규화 — 어두운 구석의 희미한 선도 같은 기준
+   *  ② 헤시안 계곡 검출(2스케일): '어둡다'가 아니라 '선 모양(V자 계곡)이다'를 측정
+   *  ③ 1px 팽창으로 끊긴 조각 연결 */
   process(cv) {
     const w = cv.width, h = cv.height;
     this.w = w; this.h = h;
@@ -130,10 +133,39 @@ const PALM_PHOTO = {
       skin[p] = (r > 60 && r >= gg && gg >= b * 0.75 && r - b > 10) ? 1 : 0;
     }
     this.skin = skin;
-    const mean = this.boxBlur(g, w, h, Math.max(6, Math.round(Math.min(w, h) / 26)));
+    const rBig = Math.max(6, Math.round(Math.min(w, h) / 26));
+    const mean = this.boxBlur(g, w, h, rBig);
 
-    // 행별 주 피부 구간 — 손 윤곽과 가장자리 후광(따뜻한 그림자 띠)이
-    // 주름으로 오인되지 않게, 구간 가장자리에서 안쪽으로 들어온 픽셀만 인정
+    // 지역 표준편차 (조명 적응 임계값의 기준)
+    const dv = new Float32Array(w * h);
+    for (let p = 0; p < w * h; p++) { const t = g[p] - mean[p]; dv[p] = t * t; }
+    const varMap = this.boxBlur(dv, w, h, rBig);
+
+    // 잡음 제거용 약한 스무딩 (지문 결 억제)
+    const Lm = this.boxBlur(this.boxBlur(g, w, h, 1), w, h, 1);
+
+    // 헤시안 계곡 응답 — 스케일 2(가는 선)·4(굵은 선)의 최대값
+    const R = new Float32Array(w * h);
+    for (const s of [2, 4]) {
+      const sw = s * w;
+      for (let y = s; y < h - s; y++) {
+        const row = y * w;
+        for (let x = s; x < w - s; x++) {
+          const p = row + x;
+          if (!skin[p]) continue;
+          const ixx = Lm[p - s] + Lm[p + s] - 2 * Lm[p];
+          const iyy = Lm[p - sw] + Lm[p + sw] - 2 * Lm[p];
+          const ixy = (Lm[p + s + sw] + Lm[p - s - sw] - Lm[p + s - sw] - Lm[p - s + sw]) / 4;
+          const tr = ixx + iyy, dt = Math.sqrt((ixx - iyy) * (ixx - iyy) + 4 * ixy * ixy);
+          const l1 = (tr + dt) / 2, l2 = (tr - dt) / 2;
+          // 계곡(어두운 선): 큰 고유값이 양수이고, 등방성 덩어리(λ2도 큼)는 억제
+          const resp = l1 > 0 ? l1 - Math.abs(l2) : 0;
+          if (resp > R[p]) R[p] = resp;
+        }
+      }
+    }
+
+    // 행별 주 피부 구간 — 손 윤곽·가장자리 후광 배제
     const L = new Int32Array(h).fill(-1), Rr = new Int32Array(h).fill(-1);
     for (let y = 0; y < h; y++) {
       const row = y * w;
@@ -151,16 +183,30 @@ const PALM_PHOTO = {
     const inset = Math.max(6, Math.round(w * 0.03));
 
     const enh = ctx.createImageData(w, h);
-    const mask = new Uint8Array(w * h);
+    const raw = new Uint8Array(w * h);
     for (let p = 0, i = 0; p < w * h; p++, i += 4) {
       const diff = g[p] - mean[p];
-      const v = Math.max(0, Math.min(255, 132 + diff * 2.8));
+      const sig = Math.sqrt(varMap[p]) + 8;
+      // 강조 뷰: 지역 대비로 정규화 — 조명과 무관하게 주름이 고르게 보인다
+      const v = Math.max(0, Math.min(255, 132 + (diff / sig) * 64));
       enh.data[i] = enh.data[i + 1] = enh.data[i + 2] = v;
       enh.data[i + 3] = 255;
-      if (diff >= -8 || !skin[p]) continue;
+      if (!skin[p]) continue;
       const x = p % w, y = (p / w) | 0;
       if (L[y] < 0 || x < L[y] + inset || x > Rr[y] - inset) continue;
+      // 마스크: 선 모양(계곡 응답)이 지역 기준을 넘거나, 아주 뚜렷하게 어두운 곳
+      if ((R[p] > Math.max(3.4, sig * 0.4) && diff < 0) || diff < -1.4 * sig) raw[p] = 1;
+    }
+    // 1px 팽창 — 끊긴 조각 연결
+    const mask = new Uint8Array(w * h);
+    for (let p = 0; p < w * h; p++) {
+      if (!raw[p]) continue;
       mask[p] = 1;
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0) mask[p - 1] = 1;
+      if (x < w - 1) mask[p + 1] = 1;
+      if (y > 0) mask[p - w] = 1;
+      if (y < h - 1) mask[p + w] = 1;
     }
     this.mask = mask;
     this.comps = [];
