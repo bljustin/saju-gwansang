@@ -32,6 +32,75 @@ const TODAY_LINE = {
   "정인": "흡수력이 좋은 날. 배우고 묻고 읽기 — 들어오는 것이 고스란히 남는 하루입니다.",
 };
 
+// ── 오늘의 기운 확장 데이터 ──────────────────────────────
+// 십이운성: 일간 × 오늘 지지 → 에너지 단계 (양간 순행 · 음간 역행)
+const STAGE12 = ["장생", "목욕", "관대", "건록", "제왕", "쇠", "병", "사", "묘", "절", "태", "양"];
+const JANGSAENG = { "갑": "해", "병": "인", "무": "인", "경": "사", "임": "신", "을": "오", "정": "유", "기": "유", "신": "자", "계": "묘" };
+// [게이지%, 이모지, 별명, 한 줄 해설] — 낮은 날도 '나쁜 날'이 아니라 '용도가 다른 날'로 서술
+const STAGE_META = {
+  "장생": [70, "🌱", "돋아나는 날", "새로 시작하는 일에 순풍이 붙는 날입니다. 첫걸음은 오늘 떼세요."],
+  "목욕": [55, "🚿", "말갛게 씻는 날", "감성이 예민해지고 매력이 살아나는 날. 대신 충동구매 버튼은 잠깐 멀리."],
+  "관대": [80, "🎓", "차려입는 날", "격식이 어울리는 날입니다. 면접·발표·첫인사에 힘이 실립니다."],
+  "건록": [90, "🏃", "제 궤도의 날", "실력이 제값을 하는 날. 미뤄둔 실무는 오늘 해치우면 됩니다."],
+  "제왕": [100, "👑", "만충의 날", "에너지 최고점입니다. 가장 어려운 일을 오늘에 배치하세요."],
+  "쇠": [60, "🍂", "한숨 돌리는 날", "정점 뒤의 완만한 구간. 새로 벌이기보다 마무리가 어울립니다."],
+  "병": [40, "🛋️", "느슨한 날", "집중이 흩어지기 쉬운 날. 가벼운 일 위주로 — 무리하지 않는 게 이기는 날입니다."],
+  "사": [30, "🌙", "고요한 날", "몸보다 머리가 잘 도는 날. 계획·구상·정리에 어울립니다."],
+  "묘": [20, "📦", "갈무리의 날", "담아두기 좋은 날입니다. 저축·백업·기록 — 오늘 담은 것이 남습니다."],
+  "절": [10, "🔌", "충전의 날", "배터리가 바닥에 가까운 날 — 게으른 게 아니라 충전이 필요한 겁니다. 오늘은 일찍 쉬는 게 일정 관리입니다."],
+  "태": [25, "🥚", "움트는 날", "아이디어가 배는 날. 실행은 내일로 미루고, 오늘은 메모만 해두세요."],
+  "양": [45, "🌤️", "기지개의 날", "기운이 서서히 차오르는 중입니다. 작은 일부터 몸을 풀면 좋습니다."],
+};
+function unseong12(gan, ji) {
+  const start = JI.indexOf(JANGSAENG[gan]), idx = JI.indexOf(ji);
+  return STAGE12[GAN_INFO[gan][1] > 0 ? (idx - start + 12) % 12 : (start - idx + 12) % 12];
+}
+// 지지 관계표
+const YUKHAP = { "자": "축", "축": "자", "인": "해", "해": "인", "묘": "술", "술": "묘", "진": "유", "유": "진", "사": "신", "신": "사", "오": "미", "미": "오" };
+const CHUNG = { "자": "오", "오": "자", "축": "미", "미": "축", "인": "신", "신": "인", "묘": "유", "유": "묘", "진": "술", "술": "진", "사": "해", "해": "사" };
+const SAMHAP = [["인", "오", "술"], ["사", "유", "축"], ["신", "자", "진"], ["해", "묘", "미"]];
+const JI_HOURS = { "자": "23~01시", "축": "01~03시", "인": "03~05시", "묘": "05~07시", "진": "07~09시", "사": "09~11시", "오": "11~13시", "미": "13~15시", "신": "15~17시", "유": "17~19시", "술": "19~21시", "해": "21~23시" };
+const TOMORROW_TEASE = {
+  "비견": "내 기준이 서는 날입니다 — 미뤄둔 결정은 내일 내리면 좋습니다",
+  "겁재": "승부수의 날입니다 — 도전할 일은 내일 던져 보세요",
+  "식신": "몰입의 날입니다 — 파고들 일은 내일로 잡아두세요",
+  "상관": "말문이 트이는 날입니다 — 연락·제안은 내일이 잘 풀립니다",
+  "편재": "판이 커 보이는 날입니다 — 큰 그림 구상은 내일로",
+  "정재": "꼼꼼함의 날입니다 — 정산·계약서 검토는 내일이 적기입니다",
+  "편관": "맷집의 날입니다 — 부담스러운 자리는 내일이 오히려 낫습니다",
+  "정관": "격식의 날입니다 — 미룬 서류·공식 일정은 내일이 더 잘 풀립니다",
+  "편인": "촉이 서는 날입니다 — 검토·재확인은 내일 하면 하나를 더 잡아냅니다",
+  "정인": "흡수의 날입니다 — 배우고 묻는 일은 내일 잘 들어옵니다",
+};
+/** 오늘 지지와 내 일지의 관계 → [이모지, 라벨, 해설] */
+function jiRelation(myJi, tJi) {
+  if (tJi === myJi)
+    return ["🪞", "같은 기운", `오늘 지지가 당신의 일지와 똑같은 <b>${myJi}</b> — 내 결이 두 배로 진해지는 날입니다. 평소의 장점도 습관도 크게 나오니, 좋은 버릇을 앞세우면 됩니다.`];
+  if (YUKHAP[myJi] === tJi)
+    return ["🤝", "합이 드는 날", `오늘 지지(${tJi})가 당신의 일지(${myJi})와 <b>육합</b> — 마음 맞는 사람이 나타나기 쉬운 날입니다. 약속·만남·부탁은 오늘 하세요.`];
+  if (CHUNG[myJi] === tJi)
+    return ["🌀", "변화의 날", `오늘 지지(${tJi})가 당신의 일지(${myJi})와 <b>충</b> — 일정이 바뀌기 쉬운 날입니다. 나쁜 날이 아니라 '움직임의 날' — 여유 시간을 끼워 두면 오히려 전환의 기회가 됩니다.`];
+  const grp = SAMHAP.find((g) => g.includes(myJi) && g.includes(tJi));
+  if (grp)
+    return ["🧩", "손발이 맞는 날", `오늘 지지(${tJi})가 당신의 일지(${myJi})와 <b>삼합</b> 짝 — 혼자보다 같이가 잘 풀리는 날입니다. 협업·모임·부탁하기 좋습니다.`];
+  return ["🍵", "담백한 날", `오늘 지지(${tJi})와 당신의 일지(${myJi})는 서로 담백한 사이 — 무리 없는 날입니다. 평소 페이스대로 가면 됩니다.`];
+}
+/** 아침 문안 스트릭 (이 기기에만 저장) */
+function touchStreak() {
+  const now = new Date();
+  const key = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem("saju.streak") || "null"); } catch (e) {}
+  if (!s) s = { last: null, n: 0 };
+  if (s.last === key) return s.n || 1;
+  const yd = new Date(now); yd.setDate(yd.getDate() - 1);
+  const ydKey = `${yd.getFullYear()}-${yd.getMonth() + 1}-${yd.getDate()}`;
+  s.n = s.last === ydKey ? (s.n || 0) + 1 : 1;
+  s.last = key;
+  try { localStorage.setItem("saju.streak", JSON.stringify(s)); } catch (e) {}
+  return s.n;
+}
+
 let lastChart = null, lastResult = null;
 
 // ── 공통 도우미 ──────────────────────────────────────────
@@ -155,19 +224,71 @@ function renderToday() {
   if (!lastChart) return;
   const now = new Date();
   const dp = dayPillar(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  const me = lastChart.day[0];
+  const me = lastChart.day[0], myJi = lastChart.day[1];
   const gs = sipsin(me, dp[0], true), js = sipsin(me, dp[1], false);
-  const gGroup = SIPSIN_GROUP[gs];
   // 오늘의 포인트 컬러: 내 명식에 없는 오행 우선, 없으면 오늘 일진의 오행
   const zero = Object.entries(lastResult.ohaeng).filter(([, n]) => n === 0).map(([o]) => o);
   const pointOh = zero.length ? zero[0] : GAN_INFO[dp[0]][0];
+  const streak = touchStreak();
+
   const c = el("div", "card today reveal");
-  c.appendChild(el("h2", null, `오늘의 기운 <small style="color:#f4ead2;opacity:.6">${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()} · ${dp}(${HANJA_GAN[dp[0]]}${HANJA_JI[dp[1]]})일</small>`));
+  c.appendChild(el("h2", null,
+    `오늘의 기운 <small style="color:#f4ead2;opacity:.6">일진은 매일 바뀝니다 · ${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()} ${dp}(${HANJA_GAN[dp[0]]}${HANJA_JI[dp[1]]})일</small>` +
+    (streak >= 2 ? `<span class="streak">🕯️ ${streak}일째 아침 문안</span>` : "")));
+
+  // ① 오늘의 한 줄 (십성)
   c.appendChild(el("p", "tline", `오늘은 당신(${me}·${MULSANG[me]})에게 <b>${gs}·${js}</b>의 날 — ${TODAY_LINE[gs]}`));
-  c.appendChild(el("p", "tsub", `오늘의 포인트 컬러: ${OHAENG_COLOR[pointOh]}(${pointOh})` +
+
+  // ② 에너지 게이지 (십이운성)
+  const stage = unseong12(me, dp[1]);
+  const [pct, gemo, gnick, gline] = STAGE_META[stage];
+  c.appendChild(el("div", "gaugewrap",
+    `<div class="gemoji">${gemo}</div>` +
+    `<div class="gmain"><div class="glab">오늘의 배터리 <b>${pct}%</b> — ${gnick}<small>십이운성 · ${stage}</small></div>` +
+    `<div class="gtrack2"><div class="gfill2" style="width:${pct}%"></div></div></div>`));
+  c.appendChild(el("p", "gdesc", gline));
+
+  // ③ 60일에 한 번 '당신의 날' / 10일에 한 번 작은 공명
+  if (dp === lastChart.day) {
+    c.appendChild(el("div", "myday", `✨ 오늘은 <b>${dp}일</b> — 당신의 일주와 똑같은, <b>60일에 한 번 오는 '당신의 날'</b>입니다. 오늘 내린 결정은 유난히 '나답게' 남습니다.`));
+  } else if (dp[0] === me) {
+    c.appendChild(el("div", "trow", `<span class="tico">🌗</span><span>오늘 천간이 당신의 일간과 같은 <b>${me}</b> — 열흘에 한 번, 내 색이 진해지는 날입니다.</span>`));
+  }
+
+  // ④ 오늘 지지 × 내 일지 관계 (합·충·삼합)
+  const [rIco, , rTxt] = jiRelation(myJi, dp[1]);
+  c.appendChild(el("div", "trow", `<span class="tico">${rIco}</span><span>${rTxt}</span>`));
+
+  // ⑤ 골든아워 — 오늘 지지와 합이 드는 시진
+  const gh = YUKHAP[dp[1]];
+  c.appendChild(el("div", "trow", `<span class="tico">⏰</span><span>오늘의 골든아워 — <b>${JI_HOURS[gh]}(${gh}시)</b>. 오늘 기운(${dp[1]})과 합이 드는 시간이라, 중요한 연락·결정은 이때가 부드럽습니다.</span>`));
+
+  // ⑥ 포인트 컬러
+  c.appendChild(el("div", "trow", `<span class="tico">🎨</span><span>오늘의 포인트 컬러 — <b>${OHAENG_COLOR[pointOh]}(${pointOh})</b>` +
     `<span class="chip" style="background:${OHAENG_HEX[pointOh]}">${pointOh}</span>` +
-    (zero.length ? " — 명식에 드러나지 않은 기운을 곁에 두는 재미입니다." : "") +
-    " · 일진은 매일 바뀝니다. 내일 또 놀러 오세요."));
+    (zero.length ? " · 명식에 드러나지 않은 기운을 곁에 두는 재미입니다." : "") + `</span>`));
+
+  // ⑦ 절기 카운트다운
+  try {
+    const kstMin = tmin(now.getFullYear(), now.getMonth() + 1, now.getDate(), now.getHours(), now.getMinutes());
+    const nj = monthJiAt(kstMin).next;
+    if (nj) {
+      const days = Math.ceil((nj.t - kstMin) / 1440);
+      const oh = JI_INFO[nj.ji][0];
+      c.appendChild(el("div", "trow", `<span class="tico">🌱</span><span>다음 절기 <b>${nj.name}</b>까지 ${days === 0 ? "<b>오늘!</b> 계절의 기운이 바뀌는 날입니다" : `<b>${days}일</b> — 계절의 기운이 ${oh}(${OHAENG_COLOR[oh]}) 쪽으로 넘어가는 중입니다`}.</span>`));
+    }
+  } catch (e) { /* 절기 조회 실패 시 생략 */ }
+
+  // ⑧ 내일 예고 — 내일 또 올 이유
+  const tm = new Date(now); tm.setDate(tm.getDate() + 1);
+  const dp2 = dayPillar(tm.getFullYear(), tm.getMonth() + 1, tm.getDate());
+  const gs2 = sipsin(me, dp2[0], true);
+  let tease = `🌙 <b>내일 예고</b> — 내일은 <b>${gs2}</b>, ${TOMORROW_TEASE[gs2]}.`;
+  if (dp2 === lastChart.day) tease += " 게다가 <b>60일에 한 번 오는 '당신의 날'</b>입니다 — 놓치지 마세요.";
+  else if (YUKHAP[myJi] === dp2[1]) tease += " 게다가 당신의 일지와 <b>합</b>이 드는 날 — 기대하셔도 좋습니다.";
+  tease += " 내일 또 확인해 보세요.";
+  c.appendChild(el("div", "tmrw", tease));
+
   root.appendChild(c);
 }
 
