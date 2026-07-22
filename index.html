@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="서버 없이 브라우저에서 동작하는 사주·성명학·관상 자기이해 도구. 입력 정보는 어디에도 전송되지 않습니다.">
+<meta name="description" content="서버 없이 브라우저에서 동작하는 사주·성명학·관상·손금 자기이해 도구. 입력 정보는 어디에도 전송되지 않습니다.">
 <meta name="theme-color" content="#2b2620">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -254,6 +254,24 @@ input[type=number]{width:96px}
 .gresult p{margin-bottom:10px;font-size:.93rem}
 .principle{background:#f4ede0;border-radius:10px;padding:12px 16px;margin-bottom:8px;font-size:.88rem}
 .principle b{color:var(--accent)}
+/* 손금 */
+.vtog{opacity:.65}
+.vtog.on{opacity:1;border-color:var(--accent);color:var(--accent);font-weight:600}
+.palmsvg{width:96px;flex-shrink:0}
+.shapesvg{width:76px;display:block;margin:0 auto 4px}
+.ppart{border-bottom:1px dashed var(--line);padding:15px 0}
+.ppart:last-child{border-bottom:none}
+.ppart .phead{display:flex;gap:12px;align-items:flex-start}
+.ppart .pname{font-weight:700;font-size:.98rem}
+.ppart .pname small{color:var(--sub);font-weight:400;margin-left:6px;font-size:.78rem}
+.ppart .pfind{font-size:.83rem;color:var(--sub);background:#f4ede0;border-radius:8px;padding:8px 11px;margin-top:6px;line-height:1.6}
+.popts{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.popt{flex:1 1 45%;min-width:140px;border:1.5px solid var(--line);border-radius:11px;background:#fff;
+  padding:10px 8px;cursor:pointer;text-align:center;font-size:.86rem;line-height:1.45;transition:.15s}
+.popt small{display:block;color:var(--sub);font-size:.72rem;margin-top:2px}
+.popt:hover{border-color:var(--accent2)}
+.popt.sel{border-color:var(--accent2);background:#eef2f8;font-weight:600;box-shadow:0 0 0 1.5px var(--accent2) inset}
+.plegend{font-size:.76rem;color:var(--sub);margin-top:6px}
 /* 접이식 해설 (관상 사전 · 긴 설명 압축) */
 details.gd{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:8px;overflow:hidden}
 details.gd summary{padding:11px 14px;cursor:pointer;font-size:.93rem;list-style:none;position:relative}
@@ -328,6 +346,7 @@ ul.plain li{margin-bottom:5px}
     <button data-tab="fortune">🌊 운의 흐름</button>
     <button data-tab="name">✍️ 이름 풀이</button>
     <button data-tab="gwansang">🪞 관상</button>
+    <button data-tab="palm">🖐️ 손금</button>
     <button data-tab="learn">📖 배우기</button>
     <button data-tab="about">ℹ️ 일러두기</button>
   </nav>
@@ -404,6 +423,39 @@ ul.plain li{margin-bottom:5px}
     </div>
   </section>
 
+  <!-- ───────── 손금 ───────── -->
+  <section id="tab-palm" class="hidden">
+    <div class="card">
+      <h2>사진으로 보는 손금 <small>이 기기 안에서만 처리 · 전송 없음</small></h2>
+      <div class="photoZone" id="palm-zone">
+        <p><b>손바닥을 화면 가득 · 손가락 위로 · 밝은 곳에서</b> — 주름이 또렷하게 강조되어 나옵니다.</p>
+        <div class="center" style="margin-top:12px">
+          <button class="btn2" id="palm-upload">📁 사진 올리기</button>
+          <button class="btn2" id="palm-camera">📷 카메라로 찍기</button>
+          <button class="btn2 hidden" id="palm-shoot">🔴 촬영</button>
+          <button class="btn2 hidden" id="palm-clear">🧹 지우기</button>
+        </div>
+        <input type="file" id="palm-file" accept="image/*" class="hidden">
+        <video id="palm-cam" class="hidden" autoplay playsinline></video>
+        <div class="center hidden" id="palm-views" style="margin-top:10px">
+          <button class="btn2 vtog" data-v="base">원본</button>
+          <button class="btn2 vtog on" data-v="enh">✨ 손금 강조</button>
+          <button class="btn2 vtog" data-v="crease">🌈 주름 감지</button>
+        </div>
+        <canvas id="palm-canvas" class="hidden"></canvas>
+        <div id="palm-status" class="hint" style="margin-top:8px"></div>
+      </div>
+      <div class="notice">사진은 이 기기 안에서만 처리되고 어디에도 저장·전송되지 않습니다. 사진 없이 아래 항목만 골라도 풀이는 열립니다.</div>
+    </div>
+    <div class="card">
+      <h2>내 손금 읽기 <small>강조된 사진을 보며 하나씩 고르면 됩니다</small></h2>
+      <div id="palm-hand"></div>
+      <div id="palm-parts"></div>
+      <div class="center" style="margin-top:14px"><button class="btn" id="btn-palm">🖐️ 손금 풀이 보기</button></div>
+    </div>
+    <div id="palm-result"></div>
+  </section>
+
   <!-- ───────── 배우기 ───────── -->
   <section id="tab-learn" class="hidden">
     <div class="card">
@@ -428,6 +480,7 @@ ul.plain li{margin-bottom:5px}
 <script src="js/nameology.js"></script>
 <script src="js/hanja_db.js"></script>
 <script src="js/interpret.js"></script>
+<script src="js/palm.js"></script>
 <script src="js/models_embedded.js"></script>
 <script src="js/face-api.min.js"></script>
 <script src="js/gwansang_photo.js"></script>

@@ -1,7 +1,7 @@
 // sw.js — 오프라인 캐시 v3
 // 코드(HTML/JS)는 네트워크 우선(업데이트 즉시 반영, 오프라인 시 캐시),
 // 모델·아이콘은 캐시 우선(한 번 받으면 다시 안 받음).
-const CACHE = "saju-v3";
+const CACHE = "saju-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -15,6 +15,7 @@ const ASSETS = [
   "./js/models_embedded.js",
   "./js/face-api.min.js",
   "./js/gwansang_photo.js",
+  "./js/palm.js",
   "./js/app.js",
   "./models/tiny_face_detector_model-weights_manifest.json",
   "./models/tiny_face_detector_model-shard1",

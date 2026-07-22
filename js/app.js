@@ -121,7 +121,7 @@ function profileKey(p) { return `${p.y}-${p.mo}-${p.d}-${p.noTime ? "x" : p.h + 
 document.querySelectorAll(".tabs button").forEach((b) => {
   b.addEventListener("click", () => {
     document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("on", x === b));
-    for (const t of ["saju", "fortune", "name", "gwansang", "learn", "about"])
+    for (const t of ["saju", "fortune", "name", "gwansang", "palm", "learn", "about"])
       $("#tab-" + t).classList.toggle("hidden", t !== b.dataset.tab);
     if (b.dataset.tab === "learn") renderLearn();
     if (b.dataset.tab === "fortune") renderFortune();
@@ -1107,6 +1107,210 @@ function renderGwansangGuide() {
   root.appendChild(el("em", "quote", `“${G.closing}”`));
 }
 renderGwansangGuide();
+
+// ── 손금 ─────────────────────────────────────────────────
+let palmCam = null;
+$("#palm-upload").addEventListener("click", () => $("#palm-file").click());
+$("#palm-file").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => { palmDraw(img); palmAnalyze(); };
+  img.src = URL.createObjectURL(f);
+});
+$("#palm-camera").addEventListener("click", async () => {
+  try {
+    // 손바닥은 후면 카메라가 편하다 (없으면 전면)
+    palmCam = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1080 } })
+      .catch(() => navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 1080 } }));
+    const v = $("#palm-cam");
+    v.srcObject = palmCam;
+    v.classList.remove("hidden");
+    $("#palm-shoot").classList.remove("hidden");
+    $("#palm-status").textContent = "손바닥을 화면 가득 채우고 [촬영]을 눌러 주세요.";
+  } catch (err) {
+    $("#palm-status").textContent = "카메라를 열 수 없습니다 (" + err.name + "). 사진 올리기를 이용해 주세요.";
+  }
+});
+$("#palm-shoot").addEventListener("click", () => {
+  const v = $("#palm-cam");
+  palmDraw(v, v.videoWidth, v.videoHeight);
+  if (palmCam) { palmCam.getTracks().forEach((t) => t.stop()); palmCam = null; }
+  v.classList.add("hidden");
+  $("#palm-shoot").classList.add("hidden");
+  palmAnalyze();
+});
+$("#palm-clear").addEventListener("click", () => {
+  if (palmCam) { palmCam.getTracks().forEach((t) => t.stop()); palmCam = null; }
+  $("#palm-cam").classList.add("hidden");
+  $("#palm-shoot").classList.add("hidden");
+  const cv = $("#palm-canvas");
+  cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
+  cv.classList.add("hidden");
+  $("#palm-views").classList.add("hidden");
+  $("#palm-clear").classList.add("hidden");
+  $("#palm-file").value = "";
+  PALM_PHOTO.base = PALM_PHOTO.views = null;
+  $("#palm-status").textContent = "지웠습니다. 사진은 어디에도 남지 않습니다.";
+});
+function palmDraw(src, w, h) {
+  const cv = $("#palm-canvas");
+  const sw = w || src.naturalWidth, sh = h || src.naturalHeight;
+  const scale = Math.min(1, 760 / sw);
+  cv.width = Math.round(sw * scale); cv.height = Math.round(sh * scale);
+  cv.getContext("2d").drawImage(src, 0, 0, cv.width, cv.height);
+  cv.classList.remove("hidden");
+  $("#palm-clear").classList.remove("hidden");
+}
+function palmAnalyze() {
+  const cv = $("#palm-canvas");
+  const st = $("#palm-status");
+  st.textContent = "⏳ 손금을 강조하고 주름을 찾는 중… (이 기기 안에서만)";
+  setTimeout(() => {
+    let n = 0;
+    try { n = PALM_PHOTO.process(cv); } catch (e) { st.textContent = "처리 중 오류: " + e.message; return; }
+    PALM_PHOTO.show(cv, "enh");
+    $("#palm-views").classList.remove("hidden");
+    document.querySelectorAll(".vtog").forEach((b) => b.classList.toggle("on", b.dataset.v === "enh"));
+    st.innerHTML = `강조 완료 — <b>굵고 긴 주름 ${n}개</b>를 찾아 [🌈 주름 감지]에 색으로 표시했습니다. ` +
+      `강조 사진을 보면서 아래 항목을 골라 주세요. 색은 위치일 뿐, 어느 선인지는 당신 눈이 가장 정확합니다.`;
+  }, 30);
+}
+document.querySelectorAll(".vtog").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".vtog").forEach((x) => x.classList.toggle("on", x === b));
+    PALM_PHOTO.show($("#palm-canvas"), b.dataset.v);
+  });
+});
+
+// 선택 UI
+function renderPalmParts() {
+  const hand = $("#palm-hand");
+  hand.innerHTML = "";
+  const hd = el("div", "ppart");
+  hd.appendChild(el("div", "pname", `${PALM_DB.hand.title}<small>왼손·오른손이 아니라 '주로 쓰는 손'이 기준입니다</small>`));
+  hd.appendChild(el("p", "pfind", PALM_DB.hand.hint));
+  const ho = el("div", "popts");
+  PALM_DB.hand.options.forEach((o) => {
+    const b = el("div", "popt", `${o.label}`);
+    b.onclick = () => { ho.querySelectorAll(".popt").forEach((x) => x.classList.remove("sel")); b.classList.add("sel"); b.dataset.k = o.k; window.__palmHand = o; };
+    ho.appendChild(b);
+  });
+  hd.appendChild(ho);
+  hand.appendChild(hd);
+
+  const box = $("#palm-parts");
+  box.innerHTML = "";
+  window.__palmSel = {};
+  PALM_DB.parts.forEach((part) => {
+    const d = el("div", "ppart");
+    const head = el("div", "phead");
+    head.innerHTML = part.svgKind === "shape" ? "" : palmSVG(part.hlLine);
+    const tx = el("div", null,
+      `<div class="pname">${part.name}<small>${part.palace} · ${part.domain}</small></div>` +
+      `<p class="pfind">🔍 ${part.find}</p>`);
+    tx.style.flex = "1";
+    head.appendChild(tx);
+    d.appendChild(head);
+    const opts = el("div", "popts");
+    part.options.forEach((o) => {
+      const b = el("div", "popt",
+        (part.svgKind === "shape" ? shapeSVG(o.rect, o.longF) : "") +
+        `${o.level}` + (o.sub ? `<small>${o.sub}</small>` : ""));
+      b.onclick = () => {
+        opts.querySelectorAll(".popt").forEach((x) => x.classList.remove("sel"));
+        b.classList.add("sel");
+        window.__palmSel[part.id] = o;
+      };
+      opts.appendChild(b);
+    });
+    d.appendChild(opts);
+    box.appendChild(d);
+  });
+}
+renderPalmParts();
+
+$("#btn-palm").addEventListener("click", () => {
+  const sel = window.__palmSel || {};
+  const picked = PALM_DB.parts.filter((p) => sel[p.id]);
+  const root = $("#palm-result");
+  root.innerHTML = "";
+  if (!picked.length) {
+    root.appendChild(el("div", "card", `<p class="notice">아직 고른 항목이 없습니다. 위에서 하나만 골라도 풀이가 열립니다 — 사진의 [✨ 손금 강조]를 보면서 고르면 쉽습니다.</p>`));
+    root.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  let delay = 0;
+  const put = (c) => { c.classList.add("reveal"); c.style.animationDelay = delay + "s"; delay += 0.18; root.appendChild(c); };
+
+  // 여는 카드
+  const c0 = el("div", "card");
+  c0.appendChild(el("h2", null, "손금을 읽기 전에 <small>이 손이 말하는 것</small>"));
+  c0.appendChild(el("div", "rbody",
+    `<p>손금은 <b>손바닥의 주름</b>이고, 주름은 <b>손을 쓰는 방식</b>이 만듭니다. 쥐고, 펴고, 일하고, 잡아 온 시간이 새겨진 자국이라 — 옛사람들은 여기서 그 사람이 살아온 결을 읽으려 했습니다.</p>` +
+    (window.__palmHand ? `<p><b>${window.__palmHand.label}</b>을 보셨네요. ${window.__palmHand.desc}</p>` : "") +
+    `<p class="tip">→ 그리고 시작 전에 가장 중요한 한 가지 — <b>생명선의 길이는 수명과 관계가 없습니다.</b> 현대 수상학이 입을 모아 말하는 원칙입니다. 이 방에서는 어떤 선도 판결이 아니라 성향으로 읽습니다.</p>`));
+  put(c0);
+
+  // 부위별 카드
+  const c1 = el("div", "card");
+  c1.appendChild(el("h2", null, "선을 하나씩 읽어 봅니다 <small>고른 항목만</small>"));
+  for (const part of picked) {
+    const o = sel[part.id];
+    const sec = el("div", "rsec");
+    sec.appendChild(el("h3", "rhead",
+      `<span class="ricon">${{ shape: "🖐️", heart: "❤️", head: "🧠", life: "🌿", fate: "🧭", simian: "✴️" }[part.id] || "✋"}</span>` +
+      `${part.name} — ${o.level} <span class="gzsmall">${part.palace}</span>`));
+    sec.appendChild(el("div", "rbody", `<p>${o.desc}</p>`));
+    c1.appendChild(sec);
+  }
+  put(c1);
+
+  // 종합 — 조합에서 한 줄
+  if (picked.length >= 3) {
+    const c2 = el("div", "card");
+    c2.appendChild(el("h2", null, "이 손의 한 줄 요약 ✍️"));
+    const names = picked.map((p) => `${p.name}(${sel[p.id].level})`).join(" · ");
+    c2.appendChild(el("div", "rbody",
+      `<p class="soft">${names}</p>` +
+      `<p>${palmSummary(sel)}</p>`));
+    put(c2);
+  }
+
+  // 닫는 카드
+  const c3 = el("div", "card");
+  c3.appendChild(el("h2", null, "마지막으로 드리고 싶은 말 🌱"));
+  c3.appendChild(el("div", "rbody",
+    `<p>${PALM_DB.closing}</p>` +
+    `<p class="warm">그리고 사주·관상·손금을 다 보신 분께 이 순서를 말씀드리고 싶습니다. <b>사주는 평생 안 바뀌고, 관상은 몇 년에 걸쳐 바뀌고, 손금은 몇 달이면 바뀝니다.</b> 바꿀 수 없는 것에서 나를 이해하고, 바뀌는 것에서 오늘 할 일을 찾는 것 — 그게 이 세 가지를 함께 보는 이유입니다. 🖐️</p>`));
+  put(c3);
+  root.scrollIntoView({ behavior: "smooth" });
+});
+
+/** 선택 조합 → 따뜻한 한 줄 요약 */
+function palmSummary(sel) {
+  const bits = [];
+  if (sel.shape) bits.push({
+    "흙손": "두 발이 땅에 붙은 단단함", "불손": "먼저 움직이는 뜨거운 엔진",
+    "공기손": "말과 생각으로 세상을 여는 힘", "물손": "깊이 느끼는 높은 해상도의 마음",
+  }[sel.shape.level]);
+  if (sel.head) bits.push({
+    "손바닥을 길게 가로지름": "오래 굴려 단단해지는 판단", "짧고 굵은 편": "핵심을 바로 잡는 속도",
+    "끝이 손목 쪽으로 휘어짐": "'만약에'를 그릴 줄 아는 상상력", "곧게 뻗은 직선": "사실을 정면으로 보는 눈",
+  }[sel.head.level]);
+  if (sel.heart) bits.push({
+    "검지 아래까지 길게": "아낌없이 주는 큰 마음", "검지와 중지 사이로": "따뜻하되 흔들리지 않는 균형",
+    "중지 아래쯤에서 멈춤": "행동으로 증명하는 진심", "사슬 모양 · 끊김이 보임": "겪은 만큼 넓어진 감수성",
+  }[sel.heart.level]);
+  if (sel.life) bits.push({
+    "엄지를 넓게 감싸는 큰 곡선": "큰 에너지 탱크", "엄지 가까이 붙은 좁은 곡선": "정밀한 에너지 연비",
+    "이중선(안쪽에 한 줄 더)": "다시 일어나는 회복력", "가늘거나 중간에 흐릿함": "아껴 쓸 줄 아는 지혜",
+  }[sel.life.level]);
+  const list = bits.filter(Boolean);
+  if (!list.length) return "당신 손의 조합은 세상에 하나뿐입니다.";
+  const joined = list.join(", ");
+  return `이 손을 한 줄로 접으면 — <b>${joined}</b>${IT.josa(joined, "을", "를").slice(joined.length)} 함께 쥔 손입니다. 이 조합은 통계적으로도 흔치 않지만, 무엇보다 이 조합으로 살아온 시간은 세상에 단 하나뿐입니다.`;
+}
 
 // ── 학습 모드 ────────────────────────────────────────────
 let learnStep = 0;
