@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사주 · 관상 — 나를 읽는 재미</title>
+<style>
+:root{
+  --bg:#f5f0e6; --paper:#fffdf7; --ink:#2b2620; --sub:#6b6154;
+  --line:#e2d9c8; --accent:#8a3324; --accent2:#1F3A5F; --gold:#d4af37;
+  --mok:#2E7D5B; --hwa:#C0392B; --to:#B8860B; --geum:#8E9AAF; --su:#1F3A5F;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  line-height:1.65; padding-bottom:60px}
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px}
+header{text-align:center;padding:26px 0 14px}
+header h1{font-size:1.7rem;letter-spacing:.32em;text-indent:.32em;font-weight:700}
+header p{color:var(--sub);font-size:.9rem;margin-top:6px}
+.tabs{display:flex;gap:6px;justify-content:center;margin:14px 0 22px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--paper);padding:8px 16px;
+  border-radius:22px;font-size:.92rem;cursor:pointer;color:var(--sub)}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:22px;margin-bottom:18px;box-shadow:0 1px 4px rgba(60,40,20,.05)}
+.card h2{font-size:1.05rem;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.card h2 small{color:var(--sub);font-weight:400;font-size:.8rem;margin-left:8px}
+.reveal{opacity:0;transform:translateY(14px);animation:fadeUp .55s forwards}
+@keyframes fadeUp{to{opacity:1;transform:none}}
+.grid{display:flex;flex-wrap:wrap;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.8rem;color:var(--sub)}
+select,input[type=number],input[type=text]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;font-size:.95rem;min-width:72px;font-family:inherit}
+input[type=number]{width:96px}
+.check{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--sub);cursor:pointer}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:10px;
+  padding:12px 34px;font-size:1.05rem;cursor:pointer;letter-spacing:.15em}
+.btn:hover{filter:brightness(1.1)}
+.btn2{background:var(--paper);color:var(--ink);border:1px solid var(--line);
+  border-radius:8px;padding:8px 18px;cursor:pointer;font-size:.9rem}
+.center{text-align:center;margin-top:10px}
+.notice{font-size:.82rem;color:var(--sub);background:#f4ede0;border-radius:8px;padding:10px 14px;margin-top:10px}
+.warn{font-size:.85rem;color:#7a2e1d;background:#f7e5df;border-radius:8px;padding:10px 14px;margin-top:10px}
+/* 오늘의 기운 */
+.today{background:linear-gradient(120deg,#2b2620,#4a3b2a);color:#f4ead2;border:none}
+.today h2{color:#f4ead2;border-color:rgba(255,255,255,.2)}
+.today .tline{font-size:1.05rem;margin:4px 0}
+.today .tsub{font-size:.83rem;opacity:.75;margin-top:8px}
+.today .chip{display:inline-block;border-radius:14px;padding:2px 12px;font-size:.82rem;margin-left:6px;color:#fff}
+/* 명식판 */
+.board{display:flex;justify-content:center;gap:10px;margin:10px 0}
+.pillar{width:120px;text-align:center}
+.pillar .plabel{font-size:.8rem;color:var(--sub);margin-bottom:6px}
+.cell{border-radius:12px;padding:10px 4px 8px;margin-bottom:8px;color:#fff;position:relative}
+.cell .hanja{font-size:2rem;font-weight:700;line-height:1.15}
+.cell .hangul{font-size:.8rem;opacity:.9}
+.cell .ss{display:inline-block;font-size:.72rem;background:rgba(255,255,255,.22);
+  border-radius:8px;padding:1px 8px;margin-top:4px}
+.cell.me{outline:3px solid var(--gold);outline-offset:2px}
+.cell .mebadge{position:absolute;top:-9px;right:-6px;background:var(--gold);color:#3b2f10;
+  font-size:.68rem;font-weight:700;border-radius:8px;padding:1px 7px}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0 4px}
+.badge{border:1px solid var(--line);background:#fff;border-radius:18px;padding:5px 14px;font-size:.85rem}
+/* 차트 */
+.bars{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.bar{display:flex;align-items:center;gap:10px}
+.bar .bl{width:70px;font-size:.85rem;text-align:right;color:var(--sub)}
+.bar .bt{flex:1;background:#efe9db;border-radius:6px;height:20px;overflow:hidden}
+.bar .bf{height:100%;border-radius:6px;transition:width .6s}
+.bar .bn{width:24px;font-size:.85rem}
+/* 이야기형 리포트 */
+.nickbox{text-align:center;background:linear-gradient(120deg,#2b2620,#4a3b2a);color:#f4ead2;
+  border-radius:14px;padding:16px;margin-bottom:20px}
+.nickbox span{display:block;font-size:.8rem;opacity:.7;letter-spacing:.2em}
+.nickbox b{font-size:1.5rem;letter-spacing:.05em;display:block;margin-top:2px}
+.nickbox .poetic{display:block;font-style:normal;font-size:.9rem;opacity:.72;margin-top:6px;letter-spacing:.06em}
+.headline{background:#f4ede0;border-left:4px solid var(--accent);border-radius:0 12px 12px 0;
+  padding:13px 16px;font-size:.97rem;line-height:1.75;margin-bottom:18px}
+/* 지표 게이지 */
+.gauges{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px}
+.gauge{flex:1;min-width:220px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+.gtop{display:flex;justify-content:space-between;align-items:baseline;font-size:.85rem;color:var(--sub)}
+.gtop b{font-size:1.15rem;color:var(--ink)}
+.gtrack{background:#efe9db;border-radius:6px;height:9px;margin:7px 0 4px;overflow:hidden}
+.gfill{height:100%;border-radius:6px;background:linear-gradient(90deg,#b8860b,#8a3324);transition:width .7s}
+.gends{display:flex;justify-content:space-between;font-size:.72rem;color:var(--sub)}
+.gauge p{font-size:.85rem;line-height:1.65;margin-top:8px;color:var(--ink)}
+/* 이름 명함 */
+.nameface{text-align:center;background:linear-gradient(120deg,#2b2620,#4a3b2a);color:#f4ead2;
+  border-radius:14px;padding:20px;margin-bottom:14px}
+.nameface .nf-kor{font-size:2rem;font-weight:700;letter-spacing:.35em;text-indent:.35em}
+.nameface .nf-hanja{font-size:1.25rem;opacity:.85;margin-top:4px;letter-spacing:.25em;text-indent:.25em}
+.nameface .nf-roman{font-size:.85rem;opacity:.6;margin-top:6px;letter-spacing:.12em}
+.nametable{width:100%;border-collapse:collapse;font-size:.9rem}
+.nametable th{width:130px;text-align:left;color:var(--sub);font-weight:600;
+  padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.nametable td{padding:9px 8px;border-bottom:1px solid var(--line)}
+.nametable tr:last-child th,.nametable tr:last-child td{border-bottom:none}
+.soft-inline{color:var(--sub);font-size:.8rem}
+.vbadge.sm{font-size:.72rem;padding:1px 9px}
+/* 뿌리·꽃·열매 */
+.rffrow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin:12px 0}
+.rffbox{flex:1;min-width:170px;border:1px solid var(--line);border-top:4px solid var(--gold);
+  border-radius:12px;background:#fff;padding:14px 12px;text-align:center}
+.rffbox .rff-ic{font-size:1.3rem}
+.rffbox .rff-pos{font-size:.78rem;color:var(--sub);letter-spacing:.25em;margin:2px 0}
+.rffbox .rff-ch{font-size:2.2rem;font-weight:700;line-height:1.2}
+.rffbox .rff-hun{font-size:.82rem;color:var(--sub)}
+.rffbox .rff-oh{margin:6px 0}
+.rffbox .chip{display:inline-block;color:#fff;border-radius:12px;padding:1px 12px;font-size:.8rem}
+.rffbox p{font-size:.8rem;color:var(--sub);text-align:left;line-height:1.6;margin-top:8px}
+.rffarrow{display:flex;flex-direction:column;justify-content:center;align-items:center;
+  font-size:1.3rem;min-width:34px;color:#2E7D5B;font-weight:700}
+.rffarrow small{font-size:.68rem;font-weight:400}
+.rffarrow.tension{color:#8a6d24}
+.goodlist{padding-left:0;list-style:none;margin:10px 0}
+.goodlist li{background:#eaf3ec;border-radius:10px;padding:10px 14px;margin-bottom:8px;
+  font-size:.93rem;line-height:1.7;position:relative;padding-left:38px}
+.goodlist li::before{content:"✓";position:absolute;left:14px;top:9px;color:#1f6b4a;font-weight:700}
+/* 수리 능선 */
+.ridge{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 6px;margin:10px 0}
+.cat{display:inline-block;border-radius:10px;padding:1px 10px;font-size:.75rem;color:#fff}
+/* 두 칼럼 (지금 할 것 / 미룰 것) */
+.twocol{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.colbox{flex:1;min-width:230px;border-radius:12px;padding:14px 16px;border:1px solid var(--line)}
+.colbox h4{font-size:.9rem;margin-bottom:8px}
+.colbox ul{padding-left:18px;font-size:.92rem;line-height:1.8}
+.colbox.do{background:#eaf3ec;border-color:#cfe2d5}
+.colbox.do h4{color:#1f6b4a}
+.colbox.wait{background:#f7f0e2;border-color:#e8dcc2}
+.colbox.wait h4{color:#8a6d24}
+/* 한자 추천 그리드 */
+.hanjagrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.hanjacell{width:88px;text-align:center;border:1px solid var(--line);border-radius:10px;
+  padding:9px 4px;background:#fff}
+.hanjacell b{display:block;font-size:1.5rem;line-height:1.2}
+.hanjacell span{display:block;font-size:.78rem;color:var(--accent)}
+.hanjacell small{display:block;font-size:.68rem;color:var(--sub);line-height:1.35}
+.hanjacell small.st{opacity:.7}
+/* 행운 세트 */
+.luckygrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.luckyitem{flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-top:3px solid var(--gold);
+  border-radius:10px;padding:11px 12px;text-align:center}
+.luckyitem span{display:block;font-size:.74rem;color:var(--sub);letter-spacing:.1em}
+.luckyitem b{display:block;font-size:1rem;margin-top:3px}
+.rsec{margin-bottom:22px;padding-bottom:18px;border-bottom:1px dashed var(--line)}
+.rsec:last-of-type{border-bottom:none;margin-bottom:8px}
+.rhead{font-size:1.06rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;line-height:1.4}
+.ricon{font-size:1.25rem;flex-shrink:0}
+.gzsmall{font-size:.78rem;color:var(--sub);font-weight:400}
+.rbody p{margin-bottom:11px;font-size:.96rem;line-height:1.78}
+.rbody p:last-child{margin-bottom:0}
+.rbody p.big{font-size:1.04rem}
+.rbody p.good{background:#eaf3ec;border-radius:10px;padding:9px 14px;font-size:.92rem}
+.rbody p.care{background:#f7f0e2;border-radius:10px;padding:9px 14px;font-size:.92rem}
+.rbody p.tip{background:#f4ede0;border-left:3px solid var(--accent);border-radius:0 10px 10px 0;
+  padding:9px 14px;font-size:.92rem}
+.rbody p.soft{color:var(--sub);font-size:.89rem}
+.rbody p.warm{background:linear-gradient(120deg,#f7efe0,#f2e8dc);border-radius:12px;
+  padding:13px 16px;font-size:.95rem;border:1px solid var(--line)}
+.rbody .tip{color:var(--accent)}
+.report p{margin-bottom:12px}
+.report .rt{font-weight:700;color:var(--accent);font-size:.82rem;letter-spacing:.1em;display:block;margin-bottom:2px}
+.sstable{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px}
+.sstable td,.sstable th{border:1px solid var(--line);padding:5px 8px;text-align:center}
+.sstable th{background:#f4ede0;font-weight:600}
+/* 대운 타임라인 */
+.timeline{display:flex;gap:10px;overflow-x:auto;padding:8px 2px 14px}
+.tl{min-width:132px;border:1px solid var(--line);border-radius:12px;background:#fff;
+  padding:11px 8px;text-align:center;cursor:pointer;flex-shrink:0;transition:.15s}
+.tl:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tl.past{opacity:.62}
+.tl.now{border:2px solid var(--gold);background:#fdf6e0;opacity:1}
+.tl .age{font-size:.72rem;color:var(--sub)}
+.tl .gz{font-size:1.4rem;font-weight:700;margin:3px 0}
+.tl .flow{font-size:.76rem;color:var(--accent);margin-top:3px;font-weight:600}
+.tl .sslabel{font-size:.7rem;color:var(--sub);margin-top:2px}
+.tl .nowtag{font-size:.7rem;color:#8a3324;font-weight:700;margin-top:4px}
+.tldetail{border-top:1px dashed var(--line);margin-top:10px;padding-top:16px}
+/* 월운 칩 */
+.mchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mchip{border-radius:10px;padding:8px 10px;font-size:.72rem;color:#fff;cursor:pointer;
+  min-width:76px;text-align:center;line-height:1.4;opacity:.88;transition:.15s}
+.mchip:hover{opacity:1;transform:translateY(-2px)}
+.mchip b{display:block;font-size:.92rem}
+.mchip .mt{font-size:.7rem;opacity:.92}
+.mchip.sel{outline:3px solid var(--gold);opacity:1}
+.mchip.thism{box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--accent)}
+/* 이름 */
+.namechips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.nchip{border-radius:12px;padding:10px 14px;color:#fff;text-align:center;min-width:74px}
+.nchip .big{font-size:1.5rem;font-weight:700}
+.nchip small{font-size:.72rem;opacity:.9;display:block}
+.relrow{text-align:center;font-size:.88rem;margin:6px 0;color:var(--sub)}
+.vbadge{display:inline-block;border-radius:14px;padding:3px 14px;color:#fff;font-size:.85rem;margin-left:6px}
+.suri4{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.suribox{flex:1;min-width:150px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.suribox .cat{display:inline-block;border-radius:10px;padding:1px 10px;font-size:.75rem;color:#fff;margin-left:6px}
+.suribox h5{font-size:.85rem;color:var(--sub);font-weight:600}
+.suribox .nm{font-size:1.05rem;font-weight:700;margin-top:2px}
+/* 관상 */
+.photoZone{border:2px dashed var(--line);border-radius:14px;padding:20px;text-align:center;background:#fff}
+.photoZone canvas, .photoZone video{max-width:100%;border-radius:10px;margin-top:12px}
+.gfind{border-bottom:1px dashed var(--line);padding:12px 0}
+.gfind:last-child{border-bottom:none}
+.gfind .gt{font-weight:600}
+.gfind .gt small{color:var(--sub);font-weight:400;margin-left:6px}
+.gfind .basis{font-size:.8rem;color:var(--sub);background:#f4ede0;border-radius:8px;padding:6px 10px;margin-top:5px}
+.gfind p{font-size:.95rem;line-height:1.75;margin-top:4px}
+.gpart{border-bottom:1px dashed var(--line);padding:13px 0}
+.gpart:last-child{border-bottom:none}
+.gpart .gname{font-weight:600}
+.gpart .gname small{color:var(--sub);font-weight:400;margin-left:6px;font-size:.78rem}
+.gopts{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.gopts label{border:1px solid var(--line);border-radius:16px;padding:5px 13px;
+  font-size:.85rem;cursor:pointer;background:#fff;color:var(--sub)}
+.gopts input{display:none}
+.gopts label.sel{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.gresult p{margin-bottom:10px;font-size:.93rem}
+.principle{background:#f4ede0;border-radius:10px;padding:12px 16px;margin-bottom:8px;font-size:.88rem}
+.principle b{color:var(--accent)}
+footer{max-width:900px;margin:26px auto 0;padding:0 16px;font-size:.76rem;color:var(--sub);text-align:center}
+.quote{font-style:normal;color:var(--accent);text-align:center;display:block;margin-top:10px;letter-spacing:.05em}
+h4.sec{margin:18px 0 6px;font-size:.95rem;color:var(--accent)}
+ul.plain{padding-left:18px;font-size:.9rem}
+ul.plain li{margin-bottom:5px}
+.hidden{display:none}
+.hint{font-size:.8rem;color:var(--sub)}
+@media(max-width:560px){ .pillar{width:78px} .cell .hanja{font-size:1.4rem} }
+/* 인쇄 · PDF 저장 */
+@media print{
+  body{background:#fff;padding:0}
+  .tabs,.photoZone,#btn-run,.btn,.btn2,footer,.hint{display:none!important}
+  .card{break-inside:avoid;box-shadow:none;border-color:#ddd;page-break-inside:avoid}
+  .reveal{opacity:1!important;transform:none!important;animation:none!important}
+  section.hidden{display:none}
+  .timeline{overflow:visible;flex-wrap:wrap}
+  .today{background:#2b2620!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cell,.nchip,.mchip,.nickbox,.gfill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>사주 · 관상</h1>
+    <p>여덟 글자, 세 글자 이름, 그리고 얼굴 — 나를 읽는 세 가지 재미</p>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="saju" class="on">🎴 사주</button>
+    <button data-tab="fortune">🌊 운의 흐름</button>
+    <button data-tab="name">✍️ 이름 풀이</button>
+    <button data-tab="gwansang">🪞 관상</button>
+    <button data-tab="learn">📖 배우기</button>
+    <button data-tab="about">ℹ️ 일러두기</button>
+  </nav>
+
+  <!-- ───────── 사주 ───────── -->
+  <section id="tab-saju">
+    <div id="today-card"></div>
+    <div class="card">
+      <h2>출생 정보 <small>양력 기준 · 시간을 모르면 3주(三柱) 해석 · 이 기기에만 저장</small></h2>
+      <div class="grid">
+        <div class="field"><label>연도</label><input type="number" id="in-y" min="1900" max="2100" placeholder="1990"></div>
+        <div class="field"><label>월</label><select id="in-mo"></select></div>
+        <div class="field"><label>일</label><select id="in-d"></select></div>
+        <div class="field"><label>시</label><select id="in-h"></select></div>
+        <div class="field"><label>분</label><select id="in-mi"></select></div>
+        <div class="field"><label>&nbsp;</label>
+          <label class="check"><input type="checkbox" id="in-noTime"> 시간 모름</label></div>
+        <div class="field"><label>성별 (대운 방향)</label>
+          <select id="in-gender"><option value="">선택 안 함</option><option value="M">남</option><option value="F">여</option></select></div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div class="field"><label>출생지 (진태양시 보정)</label><select id="in-city"></select></div>
+        <div class="field" id="lon-wrap" style="display:none"><label>경도 직접 입력 (°E)</label>
+          <input type="number" id="in-lon" step="0.01" placeholder="126.98"></div>
+        <div class="field"><label>자시 경계</label>
+          <select id="in-jasi">
+            <option value="yaja">야자시 (자정 기준 · 기본)</option>
+            <option value="jeongja">정자시 (자시 시작 기준)</option>
+          </select></div>
+        <div class="field"><label>대운수 계산</label>
+          <select id="in-du">
+            <option value="floor">버림 (전통 다수)</option>
+            <option value="round">반올림</option>
+          </select></div>
+      </div>
+      <div class="center"><button class="btn" id="btn-run">🎴 명식 펼치기</button></div>
+    </div>
+    <div id="result"></div>
+  </section>
+
+  <!-- ───────── 운의 흐름 ───────── -->
+  <section id="tab-fortune" class="hidden"><div id="fortune-body"></div></section>
+
+  <!-- ───────── 이름 풀이 ───────── -->
+  <section id="tab-name" class="hidden">
+    <div class="card">
+      <h2>이름 풀이 <small>발음오행 · 음양 배열 · 수리사격 · 사주 연계</small></h2>
+      <div class="grid">
+        <div class="field"><label>성 (한글)</label><input type="text" id="nm-fam" maxlength="2" style="width:80px" placeholder="김"></div>
+        <div class="field"><label>이름 (한글)</label><input type="text" id="nm-giv" maxlength="3" style="width:120px" placeholder="민준"></div>
+        <div class="field"><label>발음오행 학파</label>
+          <select id="nm-school">
+            <option value="classic">전통 (ㅇㅎ=토·ㅁㅂㅍ=수)</option>
+            <option value="hunmin">훈민정음계 (ㅇㅎ=수·ㅁㅂㅍ=토)</option>
+          </select></div>
+      </div>
+      <div style="margin-top:10px" id="nm-hanja-wrap">
+        <label class="hint" style="display:block;margin-bottom:6px">한자 선택 (선택사항 · 글자를 입력하면 후보가 나타납니다)</label>
+        <div class="grid" id="nm-hanja"></div>
+      </div>
+      <div class="center"><button class="btn" id="btn-name">✍️ 이름 펼치기</button></div>
+      <div class="notice">한자를 고르면 <b>한자 풀이 · 자원오행(字源五行) · 수리사격(원획 기준)</b>까지 열립니다.
+        한자를 몰라도 발음오행·음양 풀이는 충분히 유효합니다. 점수는 매기지 않습니다 — 이름은 채점 대상이 아니라 이해의 대상입니다.</div>
+    </div>
+    <div id="name-result"></div>
+  </section>
+
+  <!-- ───────── 관상 ───────── -->
+  <section id="tab-gwansang" class="hidden">
+    <div class="card">
+      <h2>사진으로 보는 관상 <small>이 기기 안에서만 처리 · 저장/전송 없음</small></h2>
+      <div class="photoZone" id="photo-zone">
+        <p>정면을 보고, 이마가 보이며, 밝은 곳에서 찍은 사진일수록 정확합니다.</p>
+        <div class="center" style="margin-top:12px">
+          <button class="btn2" id="btn-upload">📁 사진 올리기</button>
+          <button class="btn2" id="btn-camera">📷 카메라로 찍기</button>
+          <button class="btn2 hidden" id="btn-shoot">🔴 촬영</button>
+          <button class="btn2 hidden" id="btn-clear">🧹 지우기</button>
+        </div>
+        <input type="file" id="photo-file" accept="image/*" class="hidden">
+        <video id="cam" class="hidden" autoplay playsinline></video>
+        <canvas id="photo-canvas" class="hidden"></canvas>
+        <div id="photo-status" class="hint" style="margin-top:8px"></div>
+      </div>
+      <div class="notice">사진은 화면에 표시하기 위해서만 사용되며, 분석은 전부 이 컴퓨터 안에서 이루어집니다.
+        어떤 서버로도 전송되지 않고, 페이지를 떠나면 사라집니다.</div>
+    </div>
+    <div id="photo-result"></div>
+    <div class="card">
+      <h2>거울 셀프 체크 <small>사진 없이, 또는 사진이 못 재는 부위 확인용</small></h2>
+      <div id="gw-principles"></div>
+      <div id="gw-parts"></div>
+      <div class="center"><button class="btn2" id="btn-gw">해설 보기</button></div>
+    </div>
+    <div id="gw-result"></div>
+  </section>
+
+  <!-- ───────── 배우기 ───────── -->
+  <section id="tab-learn" class="hidden">
+    <div class="card">
+      <h2>내 명식으로 배우기 <small>명식 먼저, 이론은 그 다음</small></h2>
+      <div id="learn-body">
+        <p class="notice">먼저 [사주] 탭에서 명식을 펼쳐 주세요. 그 명식이 교과서가 됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── 일러두기 ───────── -->
+  <section id="tab-about" class="hidden">
+    <div class="card" id="about-body"></div>
+  </section>
+</div>
+
+<footer id="foot"></footer>
+
+<script src="js/jeolgi_data.js"></script>
+<script src="js/interpretation_db.js"></script>
+<script src="js/saju_engine.js"></script>
+<script src="js/nameology.js"></script>
+<script src="js/hanja_db.js"></script>
+<script src="js/interpret.js"></script>
+<script src="js/models_embedded.js"></script>
+<script src="js/face-api.min.js"></script>
+<script src="js/gwansang_photo.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
