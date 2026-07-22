@@ -2,8 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>사주 · 관상 — 나를 읽는 재미</title>
+<meta name="description" content="서버 없이 브라우저에서 동작하는 사주·성명학·관상 자기이해 도구. 입력 정보는 어디에도 전송되지 않습니다.">
+<meta name="theme-color" content="#2b2620">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="사주관상">
 <style>
 :root{
   --bg:#f5f0e6; --paper:#fffdf7; --ink:#2b2620; --sub:#6b6154;
@@ -379,5 +386,13 @@ ul.plain li{margin-bottom:5px}
 <script src="js/face-api.min.js"></script>
 <script src="js/gwansang_photo.js"></script>
 <script src="js/app.js"></script>
+<script>
+// PWA — 서비스 워커 등록 (file:// 로 열면 조용히 건너뜀)
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
 </body>
 </html>
